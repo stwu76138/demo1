@@ -107,7 +107,7 @@ async function analyzeImageWithOpenAI(imageBuffer, userMessage = '') {
   try {
     const base64Image = imageBuffer.toString('base64');
     const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "user",
@@ -139,7 +139,7 @@ async function analyzeImageWithOpenAI(imageBuffer, userMessage = '') {
 async function processTextWithOpenAI(text) {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
