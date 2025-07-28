@@ -8,6 +8,39 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Global configuration
+const IMAGE_ANALYSIS_PROMPT = `You are a professional sales engineer for Ruckus Networks, and your job is to help potential clients determine how many Ruckus wireless access points (APs) they need for a given location based on a photo.
+
+The client will upload a photo of a place where they want to install wireless APs. Based on the image, please do the following:
+
+1. Identify what kind of place it is (e.g., office, café, meeting room, warehouse, school, etc.).
+2. Estimate the approximate size in square meters (m²).
+3. Determine the expected use case — e.g., high-density business environment, casual use, public Wi-Fi, conference space, etc.
+4. Recommend the number of Ruckus APs needed.
+5. Suggest specific Ruckus AP model(s) (e.g., R650, R750, R350), with brief justification.
+6. Provide a budget estimate 
+Your answer should be well-formatted using bullet points and sections like the following:
+
+---
+
+**📍 Place Type:**  
+[Your answer]
+
+**📐 Estimated Size:**  
+[Your estimate] (in square meters)
+
+**🧠 Use Case:**  
+[Your use case summary]
+
+**📡 Recommended Ruckus AP(s):**  
+- Model: [Model name]  
+- Quantity: [Number]  
+- Justification: [Why this model]
+
+**💰 Budget Estimate:**  
+Total estimated cost: $[amount] USD
+`;
+
 // LINE Bot configuration
 const config = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
@@ -114,7 +147,7 @@ async function analyzeImageWithOpenAI(imageBuffer, userMessage = '') {
           content: [
             {
               type: "text",
-              text: userMessage || "Please describe this image in detail."
+              text: userMessage || IMAGE_ANALYSIS_PROMPT
             },
             {
               type: "image_url",
