@@ -22,8 +22,67 @@ const openai = new OpenAI({
 // Create LINE client
 const client = new line.Client(config);
 
-// Middleware
+// Apply CORS first
 app.use(cors());
+
+// LINE Bot webhook endpoint - MUST come BEFORE express.json() middleware
+app.post('/webhook', line.middleware(config), async (req, res) => {
+  try {
+    console.log('📨 Webhook received');
+    const events = req.body.events;
+    
+    // Process each event
+    const promises = events.map(async (event) => {
+      try {
+        if (event.type === 'message') {
+          const { replyToken, message, source } = event;
+          let replyMessage = '';
+
+          if (message.type === 'text') {
+            // Handle text message
+            console.log('Received text message:', message.text);
+            replyMessage = await processTextWithOpenAI(message.text);
+            
+          } else if (message.type === 'image') {
+            // Handle image message
+            console.log('Received image message:', message.id);
+            
+            try {
+              const imageBuffer = await downloadImage(message.id);
+              replyMessage = await analyzeImageWithOpenAI(imageBuffer);
+            } catch (error) {
+              console.error('Error processing image:', error);
+              replyMessage = 'Sorry, I encountered an error while analyzing the image. Please try again.';
+            }
+            
+          } else {
+            // Handle other message types
+            replyMessage = `I received a ${message.type} message, but I can only process text and image messages at the moment.`;
+          }
+
+          // Reply to LINE
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: replyMessage
+          });
+
+          console.log('Replied to user:', replyMessage);
+        }
+      } catch (error) {
+        console.error('Error processing individual event:', error);
+      }
+    });
+
+    await Promise.all(promises);
+    res.status(200).send('OK');
+    
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// Apply JSON parsing AFTER the LINE webhook route
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -119,64 +178,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// LINE Bot webhook endpoint
-app.post('/webhook', line.middleware(config), async (req, res) => {
-  try {
-    const events = req.body.events;
-    
-    // Process each event
-    const promises = events.map(async (event) => {
-      try {
-        if (event.type === 'message') {
-          const { replyToken, message, source } = event;
-          let replyMessage = '';
-
-          if (message.type === 'text') {
-            // Handle text message
-            console.log('Received text message:', message.text);
-            replyMessage = await processTextWithOpenAI(message.text);
-            
-          } else if (message.type === 'image') {
-            // Handle image message
-            console.log('Received image message:', message.id);
-            
-            try {
-              const imageBuffer = await downloadImage(message.id);
-              replyMessage = await analyzeImageWithOpenAI(imageBuffer);
-            } catch (error) {
-              console.error('Error processing image:', error);
-              replyMessage = 'Sorry, I encountered an error while analyzing the image. Please try again.';
-            }
-            
-          } else {
-            // Handle other message types
-            replyMessage = `I received a ${message.type} message, but I can only process text and image messages at the moment.`;
-          }
-
-          // Reply to LINE
-          await client.replyMessage(replyToken, {
-            type: 'text',
-            text: replyMessage
-          });
-
-          console.log('Replied to user:', replyMessage);
-        }
-      } catch (error) {
-        console.error('Error processing individual event:', error);
-      }
-    });
-
-    await Promise.all(promises);
-    res.status(200).send('OK');
-    
-  } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-
-
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
@@ -201,9 +202,6 @@ app.listen(PORT, () => {
   console.log(`   GET  /                - Welcome message`);
   console.log(`   GET  /health          - Health check`);
   console.log(`   POST /webhook         - LINE Bot webhook (main endpoint)`);
-  console.log(`   GET  /api/users       - Get all users`);
-  console.log(`   GET  /api/users/:id   - Get user by ID`);
-  console.log(`   POST /api/users       - Create new user`);
   console.log(`\n🤖 Features:`);
   console.log(`   ✅ Text message processing with OpenAI`);
   console.log(`   ✅ Image analysis with GPT-4 Vision`);
