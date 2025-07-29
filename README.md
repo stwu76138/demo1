@@ -15,6 +15,36 @@ A LINE Bot webhook server integrated with OpenAI API for processing text message
 - ✅ Error handling middleware
 - ✅ Health check endpoint
 
+## Architecture
+
+```mermaid
+graph TD
+    A[👤 User] -->|Sends text/image| B[📱 LINE Chat Bot]
+    B -->|Webhook POST| C[🚀 Express Server<br/>Railway.app]
+    C -->|Image Analysis| D[🤖 OpenAI GPT-4 Vision API]
+    C -->|Text Processing| E[🤖 OpenAI GPT-3.5 Turbo API]
+    
+    D -->|AI Response| C
+    E -->|AI Response| C
+    C -->|Reply Message| B
+    B -->|Shows response| A
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#fff3e0
+```
+
+### Data Flow
+1. **User Input**: User sends text or uploads image via LINE chat
+2. **Webhook Trigger**: LINE sends webhook POST request to Railway server
+3. **Processing**: Express server processes the request:
+   - **Text messages** → OpenAI GPT-3.5 Turbo API
+   - **Image messages** → OpenAI GPT-4 Vision API (Ruckus AP analysis)
+4. **AI Response**: OpenAI returns processed response
+5. **Reply**: Server sends response back to user through LINE Bot
+
 ## Installation
 
 1. Install dependencies:
@@ -75,19 +105,28 @@ The server will start on `http://localhost:3000` (or the port specified in your 
 - `GET /` - Welcome message
 - `GET /health` - Health check endpoint
 
-### Sample User API (for testing)
-- `GET /api/users` - Get all users
-- `GET /api/users/:id` - Get user by ID
-- `POST /api/users` - Create a new user
+
+
+### Specialized Features
+
+This LINE Bot is specifically designed as a **Ruckus Networks Sales Assistant**:
+
+- **Image Analysis**: Upload photos of spaces to get professional Ruckus AP recommendations
+- **Technical Consultation**: Provides specific AP model suggestions (R650, R750, R350, etc.)
+- **Budget Estimates**: Calculates costs for wireless infrastructure deployment
+- **Sales Engineering**: Acts as a knowledgeable Ruckus sales engineer
 
 ### How It Works
 
 1. **User sends a message** to your LINE Bot (text or image)
-2. **LINE sends webhook** to your `/webhook` endpoint
+2. **LINE sends webhook** to your Railway-hosted `/webhook` endpoint  
 3. **Server processes the message:**
-   - Text messages → Sent to OpenAI GPT-3.5-turbo for response
-   - Image messages → Sent to OpenAI GPT-4 Vision for analysis
-4. **OpenAI responds** with processed text or image description
+   - **Text messages** → OpenAI GPT-3.5-turbo for general assistance
+   - **Image messages** → OpenAI GPT-4 Vision for Ruckus AP site analysis
+4. **OpenAI responds** with:
+   - Professional sales engineering analysis
+   - Specific AP model recommendations  
+   - Budget estimates and technical justification
 5. **Server replies back** to the user via LINE Bot
 
 ### Testing the Webhook (for development)
@@ -105,14 +144,37 @@ ngrok http 3000
 # Example: https://abc123.ngrok.io/webhook
 ```
 
-### Example API Usage (for testing other endpoints)
+### Example Usage
+
+**Text Query:**
+```
+User: "What's the difference between R650 and R750?"
+Bot: [Provides detailed comparison of Ruckus AP models]
+```
+
+**Image Analysis:**
+```
+User: [Uploads photo of office space]
+Bot: "Nice open office space! 
+
+📍 Place Type: Modern open office
+📐 Estimated Size: ~200m²
+🧠 Use Case: High-density business environment
+📡 Recommended Ruckus AP(s):
+   - Model: R650
+   - Quantity: 4 units
+   - Justification: [Technical reasoning]
+💰 Budget Estimate: Total estimated cost: $2,400 USD"
+```
+
+### API Testing
 
 ```bash
 # Health check
-curl http://localhost:3000/health
+curl https://your-app.railway.app/health
 
-# Get users
-curl http://localhost:3000/api/users
+# Welcome message
+curl https://your-app.railway.app/
 ```
 
 ## Project Structure
