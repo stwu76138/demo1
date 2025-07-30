@@ -197,10 +197,54 @@ async function processTextWithOpenAI(text) {
 // Basic route
 app.get('/', (req, res) => {
   res.json({
-    message: 'Welcome to the LINE Bot Backend Server!',
+    message: 'Welcome to the RuckusVision Agent!',
+    subtitle: 'Smart POC Assistant Powered by OpenAI Vision',
     status: 'Server is running successfully',
     timestamp: new Date().toISOString()
   });
+});
+
+// Test endpoint for Postman (bypasses LINE signature verification)
+app.post('/webhook-test', async (req, res) => {
+  try {
+    console.log('🧪 Test webhook received:', JSON.stringify(req.body, null, 2));
+    
+    // Simulate LINE webhook format
+    const events = req.body.events || [req.body];
+    
+    if (!events || events.length === 0) {
+      return res.status(400).json({ error: 'No events provided' });
+    }
+    
+    // Process the test event (without LINE reply, just return response)
+    const event = events[0];
+    let response = '';
+    
+    if (event.type === 'message') {
+      if (event.message?.type === 'text') {
+        console.log('📝 Processing test text:', event.message.text);
+        response = await processTextWithOpenAI(event.message.text);
+      } else if (event.message?.type === 'image') {
+        response = 'Image analysis would happen here (requires actual image from LINE)';
+      } else {
+        response = `Received ${event.message?.type || 'unknown'} message type`;
+      }
+    }
+    
+    res.json({
+      status: 'success',
+      originalEvent: event,
+      botResponse: response,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ Test webhook error:', error);
+    res.status(500).json({
+      error: 'Test webhook failed',
+      message: error.message
+    });
+  }
 });
 
 // Health check endpoint
