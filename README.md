@@ -22,7 +22,7 @@ graph TD
     A[👤 User] -->|Sends text/image| B[📱 LINE Chat Bot]
     B -->|Webhook POST| C[🚀 Express Server<br/>Railway.app]
     C -->|Image Analysis| D[🤖 OpenAI GPT-4 Vision API]
-    C -->|Text Processing| E[🤖 OpenAI GPT-3.5 Turbo API]
+    C -->|Text Processing| E[🤖 OpenAI GPT-4o API]
     
     D -->|AI Response| C
     E -->|AI Response| C
