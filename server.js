@@ -177,7 +177,7 @@ async function processTextWithOpenAI(text) {
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant. Respond in a friendly and concise manner."
+          content: "You are sales assistant for Ruckus Networks. User might ask you about the product, pricing, features, etc. Respond in a friendly and concise manner."
         },
         {
           role: "user",
